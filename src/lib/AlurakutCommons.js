@@ -54,7 +54,8 @@ export function AlurakutMenu({ githubUser }) {
 }
 AlurakutMenu.Wrapper = styled.header`
   width: 100%;
-  background-color: #308BC5;
+  background-image: linear-gradient(to right, #0987a0, #805ad5);
+  
   .alurakutMenuProfileSidebar {
     background: white;
     position: fixed;
@@ -93,7 +94,9 @@ AlurakutMenu.Wrapper = styled.header`
     }
   }
   .container {
-    background-color: #308BC5;
+    background-color: transparent;
+    /*background-color: #308BC5; 
+    background-image: linear-gradient(to right, #0987a0, #805ad5);*/
     padding: 7px 16px;
     max-width: 1110px;
     margin: auto;
@@ -264,7 +267,7 @@ export function OrkutNostalgicIconSet(props) {
         { name: 'Legal', slug: 'legal', icon: 'cool' },
         { name: 'Sexy', slug: 'sexy', icon: 'heart' },
       ].map(({ name, slug, icon }) => {
-        const total = props[slug] ? props[slug] : 2;
+        const total = props[slug] ? props[slug] : 3;
         return (
           <li key={`orkut__icon_set__${slug}`}>
             <span className="OrkutNostalgicIconSet__title">
