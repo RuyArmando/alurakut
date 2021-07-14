@@ -73,25 +73,19 @@ export async function getStaticProps() {
 }
 
 export default function Home({apitoken}) {
-  const { status, error, data } = useQuerySubscription({
+  const { data } = useQuerySubscription({
     enabled: true,
     query: `
       query AppQuery {
-        allCommunities {
+        allCommunities(orderBy: _createdAt_ASC) {
           id
           title
-          imageUrl
+          imageUrl,
+          link
         }
       }`,
-    variables: { first: 10 },
     token: apitoken,
   });
-
-  const statusMessage = {
-    connecting: "Connecting to DatoCMS...",
-    connected: "Connected to DatoCMS, receiving live updates!",
-    closed: "Connection closed",
-  };
 
   const [community, setCommunity] = useState([]);
   const [following, setFollowing] = useState([]);
