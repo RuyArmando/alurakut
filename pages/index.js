@@ -8,6 +8,8 @@ import {
   OrkutNostalgicIconSet,
 } from "../src/lib/AlurakutCommons";
 
+import { useQuerySubscription } from "react-datocms";
+
 import { ProfileRelationsBoxWrapper } from "../src/components/ProfileRelations";
 
 function ProfileRelationsBox(props) {
@@ -22,7 +24,7 @@ function ProfileRelationsBox(props) {
           return (
             <li key={item.id}>
               <a href={item.link}>
-                <img src={item.image} />
+                <img src={item.imageUrl} />
                 <span>{item.title}</span>
               </a>
             </li>
@@ -63,7 +65,34 @@ function ProfileSidebar(props) {
   );
 }
 
-export default function Home() {
+export async function getStaticProps() {
+  // Using the variables below in the browser will return `undefined`. Next.js doesn't
+  // expose environment variables unless they start with `NEXT_PUBLIC_`
+  const apitoken = process.env.DATOCMS_API_TOKEN;
+  return { props: {apitoken} };
+}
+
+export default function Home({apitoken}) {
+  const { status, error, data } = useQuerySubscription({
+    enabled: true,
+    query: `
+      query AppQuery {
+        allCommunities {
+          id
+          title
+          imageUrl
+        }
+      }`,
+    variables: { first: 10 },
+    token: apitoken,
+  });
+
+  const statusMessage = {
+    connecting: "Connecting to DatoCMS...",
+    connected: "Connected to DatoCMS, receiving live updates!",
+    closed: "Connection closed",
+  };
+
   const [community, setCommunity] = useState([]);
   const [following, setFollowing] = useState([]);
 
@@ -80,7 +109,7 @@ export default function Home() {
           return {
             id: data.login,
             title: data.login,
-            image: data.avatar_url,
+            imageUrl: data.avatar_url,
             link: `/users/${data.login}`,
           };
         });
@@ -100,7 +129,7 @@ export default function Home() {
     const newCommunity = {
       id: new Date().toISOString(),
       title: comunidadeTitle,
-      image:
+      imageUrl:
         comunidadeImage.trim() !== ""
           ? comunidadeImage
           : "https://picsum.photos/300/300?" + (1 + Math.random() * (100 - 1)),
@@ -169,7 +198,12 @@ export default function Home() {
           style={{ gridArea: "profileRelationsArea" }}
         >
           <ProfileRelationsBox title="Meus amigos" items={following} />
-          <ProfileRelationsBox title="Minhas comunidades" items={community} />
+          {data && (
+            <ProfileRelationsBox
+              title="Minhas comunidades"
+              items={data.allCommunities}
+            />
+          )}
         </div>
       </MainGrid>
     </>
