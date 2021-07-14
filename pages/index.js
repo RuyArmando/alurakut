@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MainGrid from "../src/components/MainGrid";
 import Box from "../src/components/Box";
 
@@ -9,6 +9,39 @@ import {
 } from "../src/lib/AlurakutCommons";
 
 import { ProfileRelationsBoxWrapper } from "../src/components/ProfileRelations";
+
+function ProfileRelationsBox(props) {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {props.title} ({props.items.length})
+      </h2>
+
+      <ul>
+        {props.items.slice(0, 6).map((item) => {
+          return (
+            <li key={item.id}>
+              <a href={item.link}>
+                <img src={item.image} />
+                <span>{item.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      {props.items.length > 6 && (
+        <>
+          <hr />
+          <p>
+            <a className="boxLink" href="/">
+              Ver todos
+            </a>
+          </p>
+        </>
+      )}
+    </ProfileRelationsBoxWrapper>
+  );
+}
 
 function ProfileSidebar(props) {
   return (
@@ -31,80 +64,52 @@ function ProfileSidebar(props) {
 }
 
 export default function Home() {
-  const [comunidade, setComunidade] = useState([
-    {
-      id: 1245885511,
-      title: "Eu Odeio Acordar Cedo",
-      image:
-        "https://img10.orkut.br.com/community/866b85cc7220b57e7bdcbda9de686f8e.png",
-    },
-    {
-      id: 1245885513,
-      title: "Eu Odeio quem Odeia",
-      image:
-        "https://img10.orkut.br.com/community/5b61c22d6cb2ac7402f9273d13138ebe.jpg",
-    },
-    {
-      id: 1245885515,
-      title: "Se eu Morrer, Minha Mãe me Mata",
-      image:
-        "https://img10.orkut.br.com/community/2c89c09d9ddec38f6a874e3ca58d9135.jpg",
-    },
-    {
-      id: 1245885519,
-      title: "Queria Sorvete, mas era Feijão",
-      image:
-        "https://img10.orkut.br.com/community/5772468e52cea8b6dc2d07653185140b.jpg",
-    },
-    {
-      id: 1245885530,
-      title: "Eu abro a Geladeira pra Pensar",
-      image:
-        "https://img10.orkut.br.com/community/874fdf73b99da9b8368d9b1765703362.jpg",
-    },
-    {
-      id: 1245885533,
-      title: "Não sei individualizar duplas",
-      image:
-        "https://www.vagalume.com.br/chitaozinho-e-xororo/discografia/amante.jpg",
-    },
-    {
-      id: 1245885593,
-      title: "",
-      image:
-        "https://img10.orkut.br.com/community/866b85cc7220b57e7bdcbda9de686f8e.png",
-    },
-  ]);
+  const [community, setCommunity] = useState([]);
+  const [following, setFollowing] = useState([]);
 
   const [comunidadeTitle, setComunidadeTitle] = useState("");
   const [comunidadeImage, setComunidadeImage] = useState("");
 
   const usuarioAleatorio = "ruyarmando";
-  const pessoasFavoritas = [
-    "badxthing",
-    "LuucasAugusto",
-    "peedroca",
-    "WeslleyMoreira",
-    "SousaFelipeD",
-    "saulooliveira",
-    "isabeleakemi",
-    "ricardohcinfo",
-  ];
 
-  function handleCriarComunidade(event) {
+  useEffect(() => {
+    fetch(`https://api.github.com/users/${usuarioAleatorio}/following`)
+      .then((response) => response.json())
+      .then((result) => {
+        const parsedFollowers = result.map((data) => {
+          return {
+            id: data.login,
+            title: data.login,
+            image: data.avatar_url,
+            link: `/users/${data.login}`,
+          };
+        });
+
+        setFollowing(parsedFollowers);
+      })
+      .catch(function (error) {
+        console.log(
+          "There has been a problem with your fetch operation: " + error.message
+        );
+      });
+  }, []);
+
+  function handleSendCommunity(event) {
     event.preventDefault();
 
-    const rand = 1 + Math.random() * (100 - 1);
-
-    const novaComunidade = {
+    const newCommunity = {
       id: new Date().toISOString(),
       title: comunidadeTitle,
-      image: comunidadeImage.trim() !== "" ? comunidadeImage : "https://picsum.photos/300/300?" + rand,
+      image:
+        comunidadeImage.trim() !== ""
+          ? comunidadeImage
+          : "https://picsum.photos/300/300?" + (1 + Math.random() * (100 - 1)),
+      link: "/",
     };
 
-    setComunidade([...comunidade, novaComunidade]);
-    setComunidadeTitle('');
-    setComunidadeImage('');
+    setCommunity([...community, newCommunity]);
+    setComunidadeTitle("");
+    setComunidadeImage("");
   }
 
   return (
@@ -122,8 +127,7 @@ export default function Home() {
           </Box>
           <Box>
             <h2 className="subTitle">O que você deseja fazer?</h2>
-            <form onSubmit={(event) => handleCriarComunidade(event)}>
-              
+            <form onSubmit={(event) => handleSendCommunity(event)}>
               <div>
                 <input
                   name="title"
@@ -151,9 +155,9 @@ export default function Home() {
                 />
                 <datalist id="images">
                   <option value="https://picsum.photos/300/300?random=1" />
-                  <option value="https://placekitten.com/300/300"/>
-                  <option value="http://placebacon.net/300/300?image=1"/>
-                  <option value="https://baconmockup.com/300/300"/>
+                  <option value="https://placekitten.com/300/300" />
+                  <option value="http://placebacon.net/300/300?image=1" />
+                  <option value="https://baconmockup.com/300/300" />
                 </datalist>
               </div>
               <button type="submit">Criar comunidade</button>
@@ -164,63 +168,8 @@ export default function Home() {
           className="profileRelationsArea"
           style={{ gridArea: "profileRelationsArea" }}
         >
-          <ProfileRelationsBoxWrapper>
-            <h2 className="smallTitle">
-              Pessoas da comunidade ({pessoasFavoritas.length})
-            </h2>
-
-            <ul>
-              {pessoasFavoritas.slice(0, 6).map((itemAtual) => {
-                return (
-                  <li key={itemAtual}>
-                    <a href={`/users/${itemAtual}`} key={itemAtual}>
-                      <img src={`https://github.com/${itemAtual}.png`} />
-                      <span>{itemAtual}</span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-            {pessoasFavoritas.length > 6 && (
-              <>
-                <hr />
-                <p>
-                  <a className="boxLink" href="/">
-                    Ver todos
-                  </a>
-                </p>
-              </>
-            )}
-          </ProfileRelationsBoxWrapper>
-
-          <ProfileRelationsBoxWrapper>
-            <h2 className="smallTitle">
-              Minhas comunidades ({comunidade.length})
-            </h2>
-
-            <ul>
-              {comunidade.slice(0, 6).map((itemAtual) => {
-                return (
-                  <li key={itemAtual.id}>
-                    <a href={`/users/${itemAtual.title}`}>
-                      <img src={itemAtual.image} />
-                      <span>{itemAtual.title}</span>
-                    </a>
-                  </li>
-                );
-              })}
-            </ul>
-            {comunidade.length > 6 && (
-              <>
-              <hr />
-              <p>
-                <a className="boxLink" href="/">
-                  Ver todos
-                </a>
-              </p>
-            </>
-            )}
-          </ProfileRelationsBoxWrapper>
+          <ProfileRelationsBox title="Meus amigos" items={following} />
+          <ProfileRelationsBox title="Minhas comunidades" items={community} />
         </div>
       </MainGrid>
     </>
