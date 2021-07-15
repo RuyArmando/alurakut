@@ -69,10 +69,10 @@ export async function getStaticProps() {
   // Using the variables below in the browser will return `undefined`. Next.js doesn't
   // expose environment variables unless they start with `NEXT_PUBLIC_`
   const apitoken = process.env.DATOCMS_API_TOKEN;
-  return { props: {apitoken} };
+  return { props: { apitoken } };
 }
 
-export default function Home({apitoken}) {
+export default function Home({ apitoken }) {
   const { data } = useQuerySubscription({
     enabled: true,
     query: `
@@ -87,13 +87,48 @@ export default function Home({apitoken}) {
     token: apitoken,
   });
 
+  const usuarioAleatorio = "ruyarmando";
+  const sorte = [
+    "O importante não é vencer todos os dias, mas lutar sempre.",
+    "Saber encontrar a alegria na alegria dos outros, é o segredo da felicidade.",
+    "É melhor conquistar a si mesmo do que vencer mil batalhas.",
+    "Não existe um caminho para a felicidade. A felicidade é o caminho.",
+    "O período de maior ganho em conhecimento e experiência é o período mais difícil da vida de alguém.",
+    "Dê a quem você ama: asas para voar, raízes para voltar e motivos para ficar.",
+    "O medo tem alguma utilidade, mas a covardia não.",
+    "Nas grandes batalhas da vida, o primeiro passo para a vitória é o desejo de vencer.",
+    "O amor é a força mais sutil do mundo.",
+    "Se queremos progredir, não devemos repetir a história, mas fazer uma história nova.",
+    "O perdão é um catalisador que cria a ambiência necessária para uma nova partida, para um reinício.",
+    "Todo o progresso é precário, e a solução para um problema coloca-nos diante de outro problema.",
+    "A vantagem é uma dama inconstante.",
+    "A persistência é o caminho do êxito.",
+    "Enquanto você sonha, você está fazendo o rascunho do seu futuro.",
+    "Para quê preocuparmo-nos com a morte? A vida tem tantos problemas que temos de resolver primeiro.",
+    "No meio da dificuldade encontra-se a oportunidade.",
+    "Tudo o que um sonho precisa para ser realizado é alguém que acredite que ele possa ser realizado.",
+  ];
+
+  const [usuario, setUsuario] = useState([]);
   const [community, setCommunity] = useState([]);
   const [following, setFollowing] = useState([]);
 
   const [comunidadeTitle, setComunidadeTitle] = useState("");
   const [comunidadeImage, setComunidadeImage] = useState("");
+  const [mensagemSorte, setMensagemSorte] = useState(sorte[Math.floor(Math.random() * sorte.length)]);
 
-  const usuarioAleatorio = "ruyarmando";
+  useEffect(() => {
+    fetch(`https://api.github.com/users/${usuarioAleatorio}`)
+      .then((response) => response.json())
+      .then((result) => {
+        setUsuario(result);
+      })
+      .catch(function (error) {
+        console.log(
+          "There has been a problem with your fetch operation: " + error.message
+        );
+      });
+  }, []);
 
   useEffect(() => {
     fetch(`https://api.github.com/users/${usuarioAleatorio}/following`)
@@ -117,6 +152,7 @@ export default function Home({apitoken}) {
       });
   }, []);
 
+
   function handleSendCommunity(event) {
     event.preventDefault();
 
@@ -137,15 +173,17 @@ export default function Home({apitoken}) {
 
   return (
     <>
-      <AlurakutMenu githubUser={usuarioAleatorio} />
+      <AlurakutMenu githubUser={usuario} />
       <MainGrid>
         <div className="profileArea" style={{ gridArea: "profileArea" }}>
           <ProfileSidebar githubUser={usuarioAleatorio} />
         </div>
         <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
           <Box>
-            <h1 className="title">Bem vindo(a)</h1>
-
+            <h1 className="title">Bem vindo(a), {usuario.name}</h1>
+            <p className="smallText">
+              <strong>Sorte de hoje:</strong> {mensagemSorte}
+            </p>
             <OrkutNostalgicIconSet />
           </Box>
           <Box>
