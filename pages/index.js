@@ -69,10 +69,11 @@ export async function getStaticProps() {
   // Using the variables below in the browser will return `undefined`. Next.js doesn't
   // expose environment variables unless they start with `NEXT_PUBLIC_`
   const apitoken = process.env.DATOCMS_API_TOKEN;
-  return { props: { apitoken } };
+  const usuarioGitHub = "ruyarmando";
+  return { props: { apitoken, usuarioGitHub } };
 }
 
-export default function Home({ apitoken }) {
+export default function Home({ apitoken, usuarioGitHub }) {
   const { data } = useQuerySubscription({
     enabled: true,
     query: `
@@ -87,7 +88,6 @@ export default function Home({ apitoken }) {
     token: apitoken,
   });
 
-  const usuarioAleatorio = "ruyarmando";
   const sorte = [
     "O importante não é vencer todos os dias, mas lutar sempre.",
     "Saber encontrar a alegria na alegria dos outros, é o segredo da felicidade.",
@@ -118,7 +118,7 @@ export default function Home({ apitoken }) {
   const [mensagemSorte, setMensagemSorte] = useState(sorte[Math.floor(Math.random() * sorte.length)]);
 
   useEffect(() => {
-    fetch(`https://api.github.com/users/${usuarioAleatorio}`)
+    fetch(`https://api.github.com/users/${usuarioGitHub}`)
       .then((response) => response.json())
       .then((result) => {
         setUsuario(result);
@@ -131,7 +131,7 @@ export default function Home({ apitoken }) {
   }, []);
 
   useEffect(() => {
-    fetch(`https://api.github.com/users/${usuarioAleatorio}/following`)
+    fetch(`https://api.github.com/users/${usuarioGitHub}/following`)
       .then((response) => response.json())
       .then((result) => {
         const parsedFollowers = result.map((data) => {
@@ -176,7 +176,7 @@ export default function Home({ apitoken }) {
       <AlurakutMenu githubUser={usuario} />
       <MainGrid>
         <div className="profileArea" style={{ gridArea: "profileArea" }}>
-          <ProfileSidebar githubUser={usuarioAleatorio} />
+          <ProfileSidebar githubUser={usuarioGitHub} />
         </div>
         <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
           <Box>
