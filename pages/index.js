@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+
 import MainGrid from "../src/components/MainGrid";
 import Box from "../src/components/Box";
 
@@ -13,6 +15,8 @@ import { useQuerySubscription } from "react-datocms";
 import { ProfileRelationsBoxWrapper } from "../src/components/ProfileRelations";
 
 function ProfileRelationsBox(props) {
+  const router = useRouter();
+
   return (
     <ProfileRelationsBoxWrapper>
       <h2 className="smallTitle">
@@ -23,7 +27,13 @@ function ProfileRelationsBox(props) {
         {props.items.slice(0, 6).map((item) => {
           return (
             <li key={item.id}>
-              <a href={item.link}>
+              <a
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  router.push(item.link);
+                }}
+              >
                 <img src={item.imageUrl} />
                 <span>{item.title}</span>
               </a>
@@ -109,26 +119,14 @@ export default function Home({ apitoken, usuarioGitHub }) {
     "Tudo o que um sonho precisa para ser realizado é alguém que acredite que ele possa ser realizado.",
   ];
 
-  const [usuario, setUsuario] = useState([]);
   const [community, setCommunity] = useState([]);
   const [following, setFollowing] = useState([]);
 
   const [comunidadeTitle, setComunidadeTitle] = useState("");
   const [comunidadeImage, setComunidadeImage] = useState("");
-  const [mensagemSorte, setMensagemSorte] = useState(sorte[Math.floor(Math.random() * sorte.length)]);
-
-  useEffect(() => {
-    fetch(`https://api.github.com/users/${usuarioGitHub}`)
-      .then((response) => response.json())
-      .then((result) => {
-        setUsuario(result);
-      })
-      .catch(function (error) {
-        console.log(
-          "There has been a problem with your fetch operation: " + error.message
-        );
-      });
-  }, []);
+  const [mensagemSorte, setMensagemSorte] = useState(
+    sorte[Math.floor(Math.random() * sorte.length)]
+  );
 
   useEffect(() => {
     fetch(`https://api.github.com/users/${usuarioGitHub}/following`)
@@ -152,7 +150,6 @@ export default function Home({ apitoken, usuarioGitHub }) {
       });
   }, []);
 
-
   function handleSendCommunity(event) {
     event.preventDefault();
 
@@ -173,14 +170,14 @@ export default function Home({ apitoken, usuarioGitHub }) {
 
   return (
     <>
-      <AlurakutMenu githubUser={usuario} />
+      <AlurakutMenu githubUser={usuarioGitHub} />
       <MainGrid>
         <div className="profileArea" style={{ gridArea: "profileArea" }}>
           <ProfileSidebar githubUser={usuarioGitHub} />
         </div>
         <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
           <Box>
-            <h1 className="title">Bem vindo(a), {usuario.name}</h1>
+            <h1 className="title">Bem vindo(a)</h1>
             <p className="smallText">
               <strong>Sorte de hoje:</strong> {mensagemSorte}
             </p>
