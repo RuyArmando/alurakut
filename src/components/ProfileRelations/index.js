@@ -1,11 +1,11 @@
-import styled from 'styled-components';
-import Box from '../Box';
+import styled from "styled-components";
+import Box from "../Box";
 
 export const ProfileRelationsBoxWrapper = styled(Box)`
   ul {
     display: grid;
     grid-gap: 8px;
-    grid-template-columns: 1fr 1fr 1fr; 
+    grid-template-columns: 1fr 1fr 1fr;
     max-height: 220px;
     list-style: none;
   }
@@ -23,7 +23,7 @@ export const ProfileRelationsBoxWrapper = styled(Box)`
     overflow: hidden;
     border-radius: 8px;
     span {
-      color: #FFFFFF;
+      color: #ffffff;
       font-size: 10px;
       position: absolute;
       left: 0;
@@ -45,8 +45,41 @@ export const ProfileRelationsBoxWrapper = styled(Box)`
       right: 0;
       left: 0;
       bottom: 0;
-      z-indeX: 1;
-      background-image: linear-gradient(0deg,#00000073,transparent);
+      z-index: 1;
+      background-image: linear-gradient(0deg, #00000073, transparent);
     }
   }
 `;
+
+export function ProfileRelationsBox(props) {
+  return (
+    <ProfileRelationsBoxWrapper>
+      <h2 className="smallTitle">
+        {props.title} ({props.items.length})
+      </h2>
+
+      <ul>
+        {props.items.slice(0, 6).map((item) => {
+          return (
+            <li key={item.id}>
+              <a href={item.link}>
+                <img src={item.imageUrl} />
+                <span>{item.title}</span>
+              </a>
+            </li>
+          );
+        })}
+      </ul>
+      {props.items.length > 6 && (
+        <>
+          <hr />
+          <p>
+            <a className="boxLink" href="/">
+              Ver todos
+            </a>
+          </p>
+        </>
+      )}
+    </ProfileRelationsBoxWrapper>
+  );
+}

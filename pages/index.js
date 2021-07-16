@@ -1,143 +1,59 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
 
 import MainGrid from "../src/components/MainGrid";
 import Box from "../src/components/Box";
 
+import { ProfileRelationsBox } from "../src/components/ProfileRelations";
+import { ProfileSidebar } from "../src/components/ProfileSidebar";
+import { CardBox } from "../src/components/BoxMensagem";
+
+import ComunidadeForm from "../src/components/Formulario/ComunidadeForm";
+import RecadoForm from "../src/components/Formulario/RecadoForm";
+
 import {
   AlurakutMenu,
-  AlurakutProfileSidebarMenuDefault,
   OrkutNostalgicIconSet,
 } from "../src/lib/AlurakutCommons";
 
-import { useQuerySubscription } from "react-datocms";
-
-import { ProfileRelationsBoxWrapper } from "../src/components/ProfileRelations";
-
-function ProfileRelationsBox(props) {
-  const router = useRouter();
-
-  return (
-    <ProfileRelationsBoxWrapper>
-      <h2 className="smallTitle">
-        {props.title} ({props.items.length})
-      </h2>
-
-      <ul>
-        {props.items.slice(0, 6).map((item) => {
-          return (
-            <li key={item.id}>
-              <a
-                href="#"
-                onClick={(event) => {
-                  event.preventDefault();
-                  router.push(item.link);
-                }}
-              >
-                <img src={item.imageUrl} />
-                <span>{item.title}</span>
-              </a>
-            </li>
-          );
-        })}
-      </ul>
-      {props.items.length > 6 && (
-        <>
-          <hr />
-          <p>
-            <a className="boxLink" href="/">
-              Ver todos
-            </a>
-          </p>
-        </>
-      )}
-    </ProfileRelationsBoxWrapper>
-  );
-}
-
-function ProfileSidebar(props) {
-  return (
-    <Box as="aside">
-      <img
-        src={`https://github.com/${props.githubUser}.png`}
-        style={{ borderRadius: "8px" }}
-      />
-      <hr />
-      <p>
-        <a className="boxLink" href={`https://github.com/${props.githubUser}`}>
-          @{props.githubUser}
-        </a>
-      </p>
-
-      <hr />
-      <AlurakutProfileSidebarMenuDefault />
-    </Box>
-  );
-}
-
 export async function getStaticProps() {
-  // Using the variables below in the browser will return `undefined`. Next.js doesn't
-  // expose environment variables unless they start with `NEXT_PUBLIC_`
-  const apitoken = process.env.DATOCMS_API_TOKEN;
+  const apitoken = process.env.DATOCMS_READ_API_TOKEN;
   const usuarioGitHub = "ruyarmando";
   return { props: { apitoken, usuarioGitHub } };
 }
 
 export default function Home({ apitoken, usuarioGitHub }) {
-  const { data } = useQuerySubscription({
-    enabled: true,
-    query: `
-      query AppQuery {
-        allCommunities(orderBy: _createdAt_ASC) {
-          id
-          title
-          imageUrl,
-          link
-        }
-      }`,
-    token: apitoken,
-  });
-
-  const sorte = [
-    "O importante não é vencer todos os dias, mas lutar sempre.",
-    "Saber encontrar a alegria na alegria dos outros, é o segredo da felicidade.",
-    "É melhor conquistar a si mesmo do que vencer mil batalhas.",
-    "Não existe um caminho para a felicidade. A felicidade é o caminho.",
-    "O período de maior ganho em conhecimento e experiência é o período mais difícil da vida de alguém.",
-    "Dê a quem você ama: asas para voar, raízes para voltar e motivos para ficar.",
-    "O medo tem alguma utilidade, mas a covardia não.",
-    "Nas grandes batalhas da vida, o primeiro passo para a vitória é o desejo de vencer.",
-    "O amor é a força mais sutil do mundo.",
-    "Se queremos progredir, não devemos repetir a história, mas fazer uma história nova.",
-    "O perdão é um catalisador que cria a ambiência necessária para uma nova partida, para um reinício.",
-    "Todo o progresso é precário, e a solução para um problema coloca-nos diante de outro problema.",
-    "A vantagem é uma dama inconstante.",
-    "A persistência é o caminho do êxito.",
-    "Enquanto você sonha, você está fazendo o rascunho do seu futuro.",
-    "Para quê preocuparmo-nos com a morte? A vida tem tantos problemas que temos de resolver primeiro.",
-    "No meio da dificuldade encontra-se a oportunidade.",
-    "Tudo o que um sonho precisa para ser realizado é alguém que acredite que ele possa ser realizado.",
-  ];
+  const [etapa, setEtapa] = useState(0);
 
   const [community, setCommunity] = useState([]);
   const [following, setFollowing] = useState([]);
+  const [scraps, setScraps] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
 
-  const [comunidadeTitle, setComunidadeTitle] = useState("");
-  const [comunidadeImage, setComunidadeImage] = useState("");
-  const [mensagemSorte, setMensagemSorte] = useState(
-    sorte[Math.floor(Math.random() * sorte.length)]
-  );
+  const formularios = [
+    <ComunidadeForm handleSend={handleSendCommunity} />,
+    <RecadoForm
+      tilte={`O que você tem a dizer sobre ${usuarioGitHub}?`}
+      handleSend={handleSendTestimonial}
+    />,
+    <RecadoForm
+      tilte={`Deixe um recado para ${usuarioGitHub}...`}
+      handleSend={handleSendScrap}
+    />,
+  ];
 
   useEffect(() => {
+    // Github - Seguidores
     fetch(`https://api.github.com/users/${usuarioGitHub}/following`)
-      .then((response) => response.json())
-      .then((result) => {
+      .then(async (res) => {
+        const result = await res.json();
+
         const parsedFollowers = result.map((data) => {
           return {
             id: data.login,
             title: data.login,
             imageUrl: data.avatar_url,
             link: `/users/${data.login}`,
+            creatorSlug: usuarioGitHub,
           };
         });
 
@@ -148,24 +64,158 @@ export default function Home({ apitoken, usuarioGitHub }) {
           "There has been a problem with your fetch operation: " + error.message
         );
       });
+
+    // Graphql - Comunidades, Recados e Depoimentos
+    fetch(`https://graphql.datocms.com`, {
+      method: "POST",
+      headers: {
+        Authorization: `${apitoken}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        query: `query {
+        allCommunities(orderBy: createdAt_ASC) {
+          id,
+          title,
+          imageUrl,
+          creatorSlug
+        }
+        allScraps(orderBy: createdAt_DESC){
+          id,
+          content,
+          imageUrl,
+          creatorSlug
+        }
+        allTestimonials(orderBy: createdAt_DESC){
+          id,
+          content,
+          imageUrl,
+          creatorSlug
+        }
+      }`,
+      }),
+    })
+      .then(async (res) => {
+        const result = await res.json();
+
+        const parsedCommunities = result.data.allCommunities.map((data) => {
+          return {
+            id: data.id,
+            title: data.title,
+            imageUrl: data.imageUrl,
+            link: `/communities/${data.id}`,
+            creatorSlug: data.creatorSlug,
+          };
+        });
+
+        setCommunity(parsedCommunities);
+        setScraps(result.data.allScraps);
+        setTestimonials(result.data.allTestimonials);
+      })
+      .catch(function (error) {
+        console.log(
+          "There has been a problem with your fetch operation: " + error.message
+        );
+      });
   }, []);
 
-  function handleSendCommunity(event) {
-    event.preventDefault();
+  function handleSendCommunity({ comunidadeTitle, comunidadeImage }) {
+    if (comunidadeTitle.trim() !== "" && comunidadeImage.trim() !== "") {
+      const createCommunity = {
+        title: comunidadeTitle,
+        imageUrl: comunidadeImage,
+        creatorSlug: usuarioGitHub,
+      };
 
-    const newCommunity = {
-      id: new Date().toISOString(),
-      title: comunidadeTitle,
-      imageUrl:
-        comunidadeImage.trim() !== ""
-          ? comunidadeImage
-          : "https://picsum.photos/300/300?" + (1 + Math.random() * (100 - 1)),
-      link: "/",
-    };
+      // Comunidades
+      fetch(`/api/community`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createCommunity),
+      })
+        .then(async (res) => {
+          const result = await res.json();
 
-    setCommunity([...community, newCommunity]);
-    setComunidadeTitle("");
-    setComunidadeImage("");
+          const newCommunity = {
+            id: result.data.id,
+            title: result.data.title,
+            imageUrl: result.data.imageUrl,
+            link: `/communities/${result.data.id}`,
+            creatorSlug: result.data.creatorSlug,
+          };
+
+          setCommunity([...community, newCommunity]);
+        })
+        .catch(function (error) {
+          console.log(
+            "There has been a problem with your fetch operation: " +
+              error.message
+          );
+        });
+    }
+  }
+
+  function handleSendScrap({ recado }) {
+    if (recado.trim() !== "") {
+      const createScrap = {
+        content: recado,
+        creatorSlug: "Anônimo",
+        imageUrl:
+          "https://media.istockphoto.com/vectors/default-avatar-profile-icon-grey-photo-placeholder-vector-id1018999828?k=6&m=1018999828&s=170667a&w=0&h=kHLjWmbp64ztmv46lOyZUaTYKd9mWEoNyknzyP5h2y4=",
+      };
+
+      // Recado
+      fetch(`/api/scrap`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createScrap),
+      })
+        .then(async (res) => {
+          const result = await res.json();
+          setScraps([...scraps, result.data]);
+        })
+        .catch(function (error) {
+          console.log(
+            "There has been a problem with your fetch operation: " +
+              error.message
+          );
+        });
+    }
+  }
+
+  function handleSendTestimonial({ recado }) {
+    if (recado.trim() !== "") {
+      const createTestimonial = {
+        content: recado,
+        creatorSlug: "Anônimo",
+        imageUrl:
+          "https://media.istockphoto.com/vectors/default-avatar-profile-icon-grey-photo-placeholder-vector-id1018999828?k=6&m=1018999828&s=170667a&w=0&h=kHLjWmbp64ztmv46lOyZUaTYKd9mWEoNyknzyP5h2y4=",
+      };
+
+      // Depoimento
+      fetch(`/api/testimonial`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(createTestimonial),
+      })
+        .then(async (res) => {
+          const result = await res.json();
+          setTestimonials([...testimonials, result.data]);
+        })
+        .catch(function (error) {
+          console.log(
+            "There has been a problem with your fetch operation: " +
+              error.message
+          );
+        });
+    }
   }
 
   return (
@@ -178,48 +228,95 @@ export default function Home({ apitoken, usuarioGitHub }) {
         <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
           <Box>
             <h1 className="title">Bem vindo(a)</h1>
-            <p className="smallText">
-              <strong>Sorte de hoje:</strong> {mensagemSorte}
-            </p>
             <OrkutNostalgicIconSet />
           </Box>
           <Box>
             <h2 className="subTitle">O que você deseja fazer?</h2>
-            <form onSubmit={(event) => handleSendCommunity(event)}>
-              <div>
-                <input
-                  name="title"
-                  type="text"
-                  autoComplete="off"
-                  required
-                  placeholder="Qual vai ser o nome da sua comunidade?"
-                  aria-label="Infome o nome da sua comunidade"
-                  onChange={(event) => setComunidadeTitle(event.target.value)}
-                  value={comunidadeTitle}
-                />
-              </div>
-
-              <div>
-                <input
-                  name="image"
-                  type="url"
-                  list="images"
-                  autoComplete="off"
-                  required
-                  placeholder="Qual vai ser a imagem de capa da sua comunidade?"
-                  aria-label="Infome a URL da imagem de capa da sua comunidade"
-                  onChange={(event) => setComunidadeImage(event.target.value)}
-                  value={comunidadeImage}
-                />
-                <datalist id="images">
-                  <option value="https://picsum.photos/300/300?random=1" />
-                  <option value="https://placekitten.com/300/300" />
-                  <option value="http://placebacon.net/300/300?image=1" />
-                  <option value="https://baconmockup.com/300/300" />
-                </datalist>
-              </div>
-              <button type="submit">Criar comunidade</button>
-            </form>
+            <div className="buttonChoice">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  setEtapa(0);
+                }}
+              >
+                Criar comunidade
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  setEtapa(1);
+                }}
+              >
+                Escrever depoimento
+              </button>
+              <button
+                type="button"
+                secondary
+                onClick={(event) => {
+                  event.preventDefault();
+                  setEtapa(2);
+                }}
+              >
+                Deixar um scrap
+              </button>
+            </div>
+            {formularios[etapa]}
+          </Box>
+          <Box>
+            <h2 className="smallTitle">
+              {`Depoimentos (${testimonials.length})`}
+            </h2>
+            {testimonials.slice(0, 6).map((data) => {
+              return (
+                <CardBox key={data.id}>
+                  <p>{data.content}</p>
+                  <footer>
+                    <div className="userinfo">
+                      <img src={data.imageUrl} alt="logo" />
+                      <span>{data.creatorSlug}</span>
+                    </div>
+                  </footer>
+                </CardBox>
+              );
+            })}
+            {testimonials.length > 6 && (
+              <>
+                <hr />
+                <p>
+                  <a className="boxLink" href="/">
+                    Ver todos
+                  </a>
+                </p>
+              </>
+            )}
+          </Box>
+          <Box>
+            <h2 className="smallTitle">{`Recados (${scraps.length})`}</h2>
+            {scraps.slice(0, 6).map((data) => {
+              return (
+                <CardBox key={data.id}>
+                  <p>{data.content}</p>
+                  <footer>
+                    <div className="userinfo">
+                      <img src={data.imageUrl} alt="logo" />
+                      <span>{data.creatorSlug}</span>
+                    </div>
+                  </footer>
+                </CardBox>
+              );
+            })}
+            {scraps.length > 6 && (
+              <>
+                <hr />
+                <p>
+                  <a className="boxLink" href="/">
+                    Ver todos
+                  </a>
+                </p>
+              </>
+            )}
           </Box>
         </div>
         <div
@@ -227,12 +324,7 @@ export default function Home({ apitoken, usuarioGitHub }) {
           style={{ gridArea: "profileRelationsArea" }}
         >
           <ProfileRelationsBox title="Meus amigos" items={following} />
-          {data && (
-            <ProfileRelationsBox
-              title="Minhas comunidades"
-              items={data.allCommunities}
-            />
-          )}
+          <ProfileRelationsBox title="Minhas comunidades" items={community} />
         </div>
       </MainGrid>
     </>
