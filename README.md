@@ -9,7 +9,7 @@
 </p>
 
 <h1 align="center">
-    <img alt="alurakut" title="alurakut" src=".github/assets/pagina-inicial.png" />
+    <img alt="alurakut" title="alurakut" src=".github/assets/pagina-inicial-new.png" />
 </h1>
 
 <br>
