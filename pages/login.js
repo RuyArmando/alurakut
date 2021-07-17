@@ -6,6 +6,81 @@ export default function LoginPage() {
   const router = useRouter();
   const [githubUser, setGithubUser] = useState("");
 
+  async function BulkPublish() {
+    const BASE_URL = `https://api.github.com/users/${githubUser}`;
+
+    // Github - Usuário
+    const result = await fetch(`${BASE_URL}`).then((res) => res.json());
+
+    // Usuário não encontrado
+    if (!result.hasOwnProperty("login")) {
+      return;
+    }
+
+    // DatoCMS - Usuário
+    const resultUser = await fetch(`/api/user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        login: result.login,
+        name: result.name,
+        imageUrl: result.avatar_url,
+        bio: result.bio == null ? "" : result.bio.trim(),
+        githubUrl: result.html_url,
+      }),
+    }).then((res) => res.json());
+
+    if (resultUser.created) {
+      // Github - Seguindo (Amigos)
+      const following = await fetch(`${BASE_URL}/following`).then((res) =>
+        res.json()
+      );
+
+      const parsedFollowing = following.map((data) => {
+        return {
+          login: data.login,
+          imageUrl: data.avatar_url,
+          githubUrl: data.html_url,
+          creatorSlug: githubUser,
+        };
+      });
+
+      await fetch(`/api/following`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data: parsedFollowing }),
+      });
+
+      // Github - Seguidores (Fãs)
+      const followers = await fetch(`${BASE_URL}/followers`).then((res) =>
+        res.json()
+      );
+
+      const parsedFollowers = followers.map((data) => {
+        return {
+          login: data.login,
+          imageUrl: data.avatar_url,
+          githubUrl: data.html_url,
+          creatorSlug: githubUser,
+        };
+      });
+
+      await fetch(`/api/follower`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ data: parsedFollowers }),
+      });
+    }
+
+    return resultUser.data;
+  }
+
   async function handelSubmit(event) {
     event.preventDefault();
 
@@ -15,10 +90,12 @@ export default function LoginPage() {
       body: JSON.stringify({ githubUser: githubUser }),
     }).then((res) => res.json());
 
-    setCookie(null, 'USER_TOKEN', token, {
+    await BulkPublish();
+
+    setCookie(null, "USER_TOKEN", token, {
       maxAge: 2 * 24 * 60 * 60,
-      path: '/',
-    })
+      path: "/",
+    });
 
     router.push("/");
   }

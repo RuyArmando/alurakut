@@ -108,7 +108,7 @@ export default function FriendPage({ githubUser, friendData }) {
           </div>
           <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
             <Box>
-              <h2 className="smallTitle">Minhas comunidades</h2>
+              <h2 className="smallTitle">Meus amigos</h2>
               <DetailLink>
                 Início &gt; <strong>Meus amigos</strong>
               </DetailLink>
@@ -116,10 +116,10 @@ export default function FriendPage({ githubUser, friendData }) {
                 return (
                   <CardBox key={data.id}>
                     <div className="user">
-                      <img src={data.avatar_url} alt="logo" />
+                      <img src={data.imageUrl} alt="logo" />
                       <div className="userinfo">
-                        <span>{data.login}</span>
-                        <a>{data.html_url}</a>
+                        <span>{data.title}</span>
+                        <a>{`https://github.com/${data.title}`}</a>
                       </div>
                     </div>
                   </CardBox>
@@ -136,7 +136,8 @@ export default function FriendPage({ githubUser, friendData }) {
 export async function getServerSideProps(context) {
   const cookies = nookies.get(context);
   const token = cookies.USER_TOKEN;
-
+  const apitoken = process.env.DATOCMS_READ_API_TOKEN;
+  
   const { isAuthenticated } = await fetch(
     "https://alurakut.vercel.app/api/auth",
     {
@@ -156,13 +157,28 @@ export async function getServerSideProps(context) {
   }
 
   const { githubUser } = jwt.decode(token);
-  const data = await fetch(
-    `https://api.github.com/users/${githubUser}/following`
-  ).then((res) => res.json());
+  
+  const { data } = await fetch(`https://graphql.datocms.com`, {
+    method: "POST",
+    headers: {
+      Authorization: `${apitoken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      query: `query {
+        allFollowings(filter: {creatorSlug: {eq: ${githubUser}}}, orderBy: createdAt_ASC){
+          id,
+          title: login,
+          imageUrl,
+        }
+      }`,
+    }),
+  }).then((res) => res.json());
 
   return {
     props: {
-      friendData: data,
+      friendData: data.allFollowings,
       githubUser,
     },
   };

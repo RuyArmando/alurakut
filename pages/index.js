@@ -21,7 +21,7 @@ import {
   OrkutNostalgicIconSet,
 } from "../src/lib/AlurakutCommons";
 
-export default function Home({ apitoken, githubUser }) {
+export default function Home({ apitoken, githubUser, profileUser }) {
   const [etapa, setEtapa] = useState(0);
 
   const [community, setCommunity] = useState([]);
@@ -43,53 +43,7 @@ export default function Home({ apitoken, githubUser }) {
   ];
 
   useEffect(() => {
-    // Github - Seguindo (Amigos)
-    fetch(`https://api.github.com/users/${githubUser}/following`)
-      .then(async (res) => {
-        const result = await res.json();
-
-        const parsedFollowing = result.map((data) => {
-          return {
-            id: data.login,
-            title: data.login,
-            imageUrl: data.avatar_url,
-            link: `/users/${data.login}`,
-            creatorSlug: githubUser,
-          };
-        });
-
-        setFollowing(parsedFollowing);
-      })
-      .catch(function (error) {
-        console.log(
-          "There has been a problem with your fetch operation: " + error.message
-        );
-      });
-
-    // Github - Seguidores (Fãs)
-    fetch(`https://api.github.com/users/${githubUser}/followers`)
-      .then(async (res) => {
-        const result = await res.json();
-
-        const parsedFollowers = result.map((data) => {
-          return {
-            id: data.login,
-            title: data.login,
-            imageUrl: data.avatar_url,
-            link: `/users/${data.login}`,
-            creatorSlug: githubUser,
-          };
-        });
-
-        setFollowers(parsedFollowers);
-      })
-      .catch(function (error) {
-        console.log(
-          "There has been a problem with your fetch operation: " + error.message
-        );
-      });
-
-    // Graphql - Comunidades, Recados e Depoimentos
+    // Graphql - Comunidades, Amigos, Fãs Recados e Depoimentos
     fetch(`https://graphql.datocms.com`, {
       method: "POST",
       headers: {
@@ -104,6 +58,16 @@ export default function Home({ apitoken, githubUser }) {
           title,
           imageUrl,
           creatorSlug
+        }
+        allFollowers(filter: {creatorSlug: {eq: ${githubUser}}}, orderBy: createdAt_ASC){
+          id,
+          login,
+          imageUrl,
+        }
+        allFollowings(filter: {creatorSlug: {eq: ${githubUser}}}, orderBy: createdAt_ASC){
+          id,
+          login,
+          imageUrl,
         }
         allScraps(filter: {ownerSlug: {eq: ${githubUser}}}, orderBy: createdAt_DESC){
           id,
@@ -122,7 +86,7 @@ export default function Home({ apitoken, githubUser }) {
     })
       .then(async (res) => {
         const result = await res.json();
-
+        // Comunidades
         const parsedCommunities = result.data.allCommunities.map((data) => {
           return {
             id: data.id,
@@ -132,8 +96,30 @@ export default function Home({ apitoken, githubUser }) {
             creatorSlug: data.creatorSlug,
           };
         });
+        // Fãs
+        const parsedFollowers = result.data.allFollowers.map((data) => {
+          return {
+            id: data.id,
+            title: data.login,
+            imageUrl: data.imageUrl,
+            link: `/user/${data.login}`,
+            creatorSlug: data.creatorSlug,
+          };
+        });
+        // Amigos
+        const parsedFollowings = result.data.allFollowings.map((data) => {
+          return {
+            id: data.id,
+            title: data.login,
+            imageUrl: data.imageUrl,
+            link: `/user/${data.login}`,
+            creatorSlug: data.creatorSlug,
+          };
+        });
 
         setCommunity(parsedCommunities);
+        setFollowers(parsedFollowers);
+        setFollowing(parsedFollowings);
         setScraps(result.data.allScraps);
         setTestimonials(result.data.allTestimonials);
       })
@@ -263,7 +249,7 @@ export default function Home({ apitoken, githubUser }) {
           </div>
           <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
             <Box>
-              <h1 className="title">Bem vindo(a) {githubUser}</h1>
+              <h1 className="title">Bem vindo(a)</h1>
               <OrkutNostalgicIconSet
                 fas={followers.length}
                 recados={scraps.length}
@@ -391,6 +377,7 @@ export async function getServerSideProps(context) {
   if (!isAuthenticated) {
     return {
       redirect: {
+        source:"/",
         destination: "/login",
         permanent: false,
       },
@@ -400,10 +387,31 @@ export async function getServerSideProps(context) {
   const { githubUser } = jwt.decode(token);
   const apitoken = process.env.DATOCMS_READ_API_TOKEN;
 
+  const { data } = await fetch(`https://graphql.datocms.com`, {
+    method: "POST",
+    headers: {
+      Authorization: `${apitoken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      query: `query {
+      allUsers(filter: {login: {eq: ${githubUser}}}){
+        id,
+        login,
+        name,
+        bio,
+        githubUrl
+      }
+    }`,
+    }),
+  }).then((res) => res.json());
+
   return {
     props: {
       apitoken,
-      githubUser,
+      githubUser: githubUser,
+      profileUser: data.allUsers,
     },
   };
 }

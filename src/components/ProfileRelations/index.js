@@ -67,10 +67,12 @@ export function ProfileRelationsBox(props) {
         {props.items.slice(0, 6).map((item) => {
           return (
             <li key={item.id}>
-              <a href={item.link}>
-                <img src={item.imageUrl} />
-                <span>{item.title}</span>
-              </a>
+              <NextLink href={item.link}>
+                <a>
+                  <img src={item.imageUrl} />
+                  <span>{item.title}</span>
+                </a>
+              </NextLink>
             </li>
           );
         })}

@@ -116,10 +116,10 @@ export default function FollowerPage({ githubUser, followerData }) {
                 return (
                   <CardBox key={data.id}>
                     <div className="user">
-                      <img src={data.avatar_url} alt="logo" />
+                      <img src={data.imageUrl} alt="logo" />
                       <div className="userinfo">
-                        <span>{data.login}</span>
-                        <a>{data.html_url}</a>
+                        <span>{data.title}</span>
+                        <a>{`https://github.com/${data.title}`}</a>
                       </div>
                     </div>
                   </CardBox>
@@ -136,6 +136,7 @@ export default function FollowerPage({ githubUser, followerData }) {
 export async function getServerSideProps(context) {
   const cookies = nookies.get(context);
   const token = cookies.USER_TOKEN;
+  const apitoken = process.env.DATOCMS_READ_API_TOKEN;
 
   const { isAuthenticated } = await fetch(
     "https://alurakut.vercel.app/api/auth",
@@ -156,13 +157,28 @@ export async function getServerSideProps(context) {
   }
 
   const { githubUser } = jwt.decode(token);
-  const data = await fetch(
-    `https://api.github.com/users/${githubUser}/followers`
-  ).then((res) => res.json());
+
+  const { data } = await fetch(`https://graphql.datocms.com`, {
+    method: "POST",
+    headers: {
+      Authorization: `${apitoken}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      query: `query {
+        allFollowers(filter: {creatorSlug: {eq: ${githubUser}}}, orderBy: createdAt_ASC){
+          id,
+          title: login,
+          imageUrl,
+        }
+      }`,
+    }),
+  }).then((res) => res.json());
 
   return {
     props: {
-      followerData: data,
+      followerData: data.allFollowers,
       githubUser,
     },
   };
