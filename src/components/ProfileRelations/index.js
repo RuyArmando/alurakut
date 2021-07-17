@@ -1,3 +1,4 @@
+import NextLink from "next/link";
 import styled from "styled-components";
 import Box from "../Box";
 
@@ -55,7 +56,11 @@ export function ProfileRelationsBox(props) {
   return (
     <ProfileRelationsBoxWrapper>
       <h2 className="smallTitle">
-        {props.title} ({props.items.length})
+        {props.title} (
+        <NextLink href={props.slug}>
+          <a className="boxLink">{props.items.length}</a>
+        </NextLink>
+        )
       </h2>
 
       <ul>
@@ -74,9 +79,9 @@ export function ProfileRelationsBox(props) {
         <>
           <hr />
           <p>
-            <a className="boxLink" href="/">
-              Ver todos
-            </a>
+            <NextLink href={props.slug}>
+              <a className="boxLink">Ver todos</a>
+            </NextLink>
           </p>
         </>
       )}

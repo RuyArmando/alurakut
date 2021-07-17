@@ -5,14 +5,13 @@ export default async function handler(req, res) {
     // Process a POST request
     const client = new SiteClient(process.env.DATOCMS_API_TOKEN);
 
-    // '{"title": "BláBláBlá", "imageUrl":"http://meusite.com.br", "creatorSlug":"eumesmo" }'
-
     // envia a nova comunidade para o DatoCMS
     const newRecord = await client.items.create({
       itemType: "972868", // model ID
       content: req.body.content,
       imageUrl: req.body.imageUrl,
       creatorSlug: req.body.creatorSlug,
+      ownerSlug: req.body.ownerSlug,
     });
 
     res.status(200).json({ data: newRecord });

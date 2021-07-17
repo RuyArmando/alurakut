@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
 
+import Head from "next/head";
+import NextLink from "next/link";
+
+import nookies from "nookies";
+import jwt from "jsonwebtoken";
+
 import MainGrid from "../src/components/MainGrid";
 import Box from "../src/components/Box";
 
@@ -15,35 +21,53 @@ import {
   OrkutNostalgicIconSet,
 } from "../src/lib/AlurakutCommons";
 
-export async function getStaticProps() {
-  const apitoken = process.env.DATOCMS_READ_API_TOKEN;
-  const usuarioGitHub = "ruyarmando";
-  return { props: { apitoken, usuarioGitHub } };
-}
-
-export default function Home({ apitoken, usuarioGitHub }) {
+export default function Home({ apitoken, githubUser }) {
   const [etapa, setEtapa] = useState(0);
 
   const [community, setCommunity] = useState([]);
   const [following, setFollowing] = useState([]);
+  const [followers, setFollowers] = useState([]);
   const [scraps, setScraps] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
 
   const formularios = [
     <ComunidadeForm handleSend={handleSendCommunity} />,
     <RecadoForm
-      tilte={`O que você tem a dizer sobre ${usuarioGitHub}?`}
+      tilte={`O que você tem a dizer sobre ${githubUser}?`}
       handleSend={handleSendTestimonial}
     />,
     <RecadoForm
-      tilte={`Deixe um recado para ${usuarioGitHub}...`}
+      tilte={`Deixe um recado para ${githubUser}...`}
       handleSend={handleSendScrap}
     />,
   ];
 
   useEffect(() => {
-    // Github - Seguidores
-    fetch(`https://api.github.com/users/${usuarioGitHub}/following`)
+    // Github - Seguindo (Amigos)
+    fetch(`https://api.github.com/users/${githubUser}/following`)
+      .then(async (res) => {
+        const result = await res.json();
+
+        const parsedFollowing = result.map((data) => {
+          return {
+            id: data.login,
+            title: data.login,
+            imageUrl: data.avatar_url,
+            link: `/users/${data.login}`,
+            creatorSlug: githubUser,
+          };
+        });
+
+        setFollowing(parsedFollowing);
+      })
+      .catch(function (error) {
+        console.log(
+          "There has been a problem with your fetch operation: " + error.message
+        );
+      });
+
+    // Github - Seguidores (Fãs)
+    fetch(`https://api.github.com/users/${githubUser}/followers`)
       .then(async (res) => {
         const result = await res.json();
 
@@ -53,11 +77,11 @@ export default function Home({ apitoken, usuarioGitHub }) {
             title: data.login,
             imageUrl: data.avatar_url,
             link: `/users/${data.login}`,
-            creatorSlug: usuarioGitHub,
+            creatorSlug: githubUser,
           };
         });
 
-        setFollowing(parsedFollowers);
+        setFollowers(parsedFollowers);
       })
       .catch(function (error) {
         console.log(
@@ -75,19 +99,19 @@ export default function Home({ apitoken, usuarioGitHub }) {
       },
       body: JSON.stringify({
         query: `query {
-        allCommunities(orderBy: createdAt_ASC) {
+        allCommunities(filter: {creatorSlug: {eq: ${githubUser}}}, orderBy: createdAt_ASC) {
           id,
           title,
           imageUrl,
           creatorSlug
         }
-        allScraps(orderBy: createdAt_DESC){
+        allScraps(filter: {ownerSlug: {eq: ${githubUser}}}, orderBy: createdAt_DESC){
           id,
           content,
           imageUrl,
           creatorSlug
         }
-        allTestimonials(orderBy: createdAt_DESC){
+        allTestimonials(filter: {ownerSlug: {eq: ${githubUser}}}, orderBy: createdAt_DESC){
           id,
           content,
           imageUrl,
@@ -125,7 +149,7 @@ export default function Home({ apitoken, usuarioGitHub }) {
       const createCommunity = {
         title: comunidadeTitle,
         imageUrl: comunidadeImage,
-        creatorSlug: usuarioGitHub,
+        creatorSlug: githubUser,
       };
 
       // Comunidades
@@ -161,10 +185,10 @@ export default function Home({ apitoken, usuarioGitHub }) {
   function handleSendScrap({ recado }) {
     if (recado.trim() !== "") {
       const createScrap = {
+        ownerSlug: githubUser,
         content: recado,
-        creatorSlug: "Anônimo",
-        imageUrl:
-          "https://media.istockphoto.com/vectors/default-avatar-profile-icon-grey-photo-placeholder-vector-id1018999828?k=6&m=1018999828&s=170667a&w=0&h=kHLjWmbp64ztmv46lOyZUaTYKd9mWEoNyknzyP5h2y4=",
+        creatorSlug: githubUser,
+        imageUrl: `https://github.com/${githubUser}.png`,
       };
 
       // Recado
@@ -191,10 +215,10 @@ export default function Home({ apitoken, usuarioGitHub }) {
   function handleSendTestimonial({ recado }) {
     if (recado.trim() !== "") {
       const createTestimonial = {
+        ownerSlug: githubUser,
         content: recado,
-        creatorSlug: "Anônimo",
-        imageUrl:
-          "https://media.istockphoto.com/vectors/default-avatar-profile-icon-grey-photo-placeholder-vector-id1018999828?k=6&m=1018999828&s=170667a&w=0&h=kHLjWmbp64ztmv46lOyZUaTYKd9mWEoNyknzyP5h2y4=",
+        creatorSlug: githubUser,
+        imageUrl: `https://github.com/${githubUser}.png`,
       };
 
       // Depoimento
@@ -220,113 +244,166 @@ export default function Home({ apitoken, usuarioGitHub }) {
 
   return (
     <>
-      <AlurakutMenu githubUser={usuarioGitHub} />
-      <MainGrid>
-        <div className="profileArea" style={{ gridArea: "profileArea" }}>
-          <ProfileSidebar githubUser={usuarioGitHub} />
-        </div>
-        <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
-          <Box>
-            <h1 className="title">Bem vindo(a)</h1>
-            <OrkutNostalgicIconSet />
-          </Box>
-          <Box>
-            <h2 className="subTitle">O que você deseja fazer?</h2>
-            <div className="buttonChoice">
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  setEtapa(0);
-                }}
-              >
-                Criar comunidade
-              </button>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  setEtapa(1);
-                }}
-              >
-                Escrever depoimento
-              </button>
-              <button
-                type="button"
-                secondary
-                onClick={(event) => {
-                  event.preventDefault();
-                  setEtapa(2);
-                }}
-              >
-                Deixar um scrap
-              </button>
-            </div>
-            {formularios[etapa]}
-          </Box>
-          <Box>
-            <h2 className="smallTitle">
-              {`Depoimentos (${testimonials.length})`}
-            </h2>
-            {testimonials.slice(0, 6).map((data) => {
-              return (
-                <CardBox key={data.id}>
-                  <p>{data.content}</p>
-                  <footer>
-                    <div className="userinfo">
-                      <img src={data.imageUrl} alt="logo" />
-                      <span>{data.creatorSlug}</span>
-                    </div>
-                  </footer>
-                </CardBox>
-              );
-            })}
-            {testimonials.length > 6 && (
-              <>
-                <hr />
-                <p>
-                  <a className="boxLink" href="/">
-                    Ver todos
-                  </a>
-                </p>
-              </>
-            )}
-          </Box>
-          <Box>
-            <h2 className="smallTitle">{`Recados (${scraps.length})`}</h2>
-            {scraps.slice(0, 6).map((data) => {
-              return (
-                <CardBox key={data.id}>
-                  <p>{data.content}</p>
-                  <footer>
-                    <div className="userinfo">
-                      <img src={data.imageUrl} alt="logo" />
-                      <span>{data.creatorSlug}</span>
-                    </div>
-                  </footer>
-                </CardBox>
-              );
-            })}
-            {scraps.length > 6 && (
-              <>
-                <hr />
-                <p>
-                  <a className="boxLink" href="/">
-                    Ver todos
-                  </a>
-                </p>
-              </>
-            )}
-          </Box>
-        </div>
-        <div
-          className="profileRelationsArea"
-          style={{ gridArea: "profileRelationsArea" }}
-        >
-          <ProfileRelationsBox title="Meus amigos" items={following} />
-          <ProfileRelationsBox title="Minhas comunidades" items={community} />
-        </div>
-      </MainGrid>
+      <Head>
+        <link rel="icon" href="https://alurakut.vercel.app/logo.svg" />
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
+        <meta name="X-UA-Compatible" content="ie=edge" />
+        <title>Alurakut</title>
+      </Head>
+      <AlurakutMenu githubUser={githubUser} />
+      <div
+        style={{
+          width: "100%",
+        }}
+      >
+        <MainGrid>
+          <div className="profileArea" style={{ gridArea: "profileArea" }}>
+            <ProfileSidebar githubUser={githubUser} />
+          </div>
+          <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
+            <Box>
+              <h1 className="title">Bem vindo(a) {githubUser}</h1>
+              <OrkutNostalgicIconSet
+                fas={followers.length}
+                recados={scraps.length}
+                mensagens={testimonials.length}
+              />
+            </Box>
+            <Box>
+              <h2 className="subTitle">O que você deseja fazer?</h2>
+              <div className="buttonChoice">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setEtapa(0);
+                  }}
+                >
+                  Criar comunidade
+                </button>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setEtapa(1);
+                  }}
+                >
+                  Escrever depoimento
+                </button>
+                <button
+                  type="button"
+                  secondary
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setEtapa(2);
+                  }}
+                >
+                  Deixar um scrap
+                </button>
+              </div>
+              {formularios[etapa]}
+            </Box>
+            <Box>
+              <h2 className="smallTitle">
+                Depoimentos (
+                <NextLink href="/testimonials">
+                  <a className="boxLink">{testimonials.length}</a>
+                </NextLink>
+                )
+              </h2>
+              {testimonials.slice(0, 3).map((data) => {
+                return (
+                  <CardBox key={data.id}>
+                    <p>{data.content}</p>
+                    <footer>
+                      <div className="userinfo">
+                        <img src={data.imageUrl} alt="logo" />
+                        <span>{data.creatorSlug}</span>
+                      </div>
+                    </footer>
+                  </CardBox>
+                );
+              })}
+            </Box>
+            <Box>
+              <h2 className="smallTitle">
+                Recados (
+                <NextLink href="/scraps">
+                  <a className="boxLink">{scraps.length}</a>
+                </NextLink>
+                )
+              </h2>
+              {scraps.slice(0, 3).map((data) => {
+                return (
+                  <CardBox key={data.id}>
+                    <p>{data.content}</p>
+                    <footer>
+                      <div className="userinfo">
+                        <img src={data.imageUrl} alt="logo" />
+                        <span>{data.creatorSlug}</span>
+                      </div>
+                    </footer>
+                  </CardBox>
+                );
+              })}
+            </Box>
+          </div>
+          <div
+            className="profileRelationsArea"
+            style={{ gridArea: "profileRelationsArea" }}
+          >
+            <ProfileRelationsBox
+              title="Meus amigos"
+              slug="/friends"
+              items={following}
+            />
+            <ProfileRelationsBox
+              title="Meus fãs"
+              slug="/followers"
+              items={followers}
+            />
+            <ProfileRelationsBox
+              title="Minhas comunidades"
+              slug="/communities"
+              items={community}
+            />
+          </div>
+        </MainGrid>
+      </div>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const cookies = nookies.get(context);
+  const token = cookies.USER_TOKEN;
+
+  const { isAuthenticated } = await fetch(
+    "https://alurakut.vercel.app/api/auth",
+    {
+      headers: {
+        Authorization: token,
+      },
+    }
+  ).then((res) => res.json());
+
+  if (!isAuthenticated) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  const { githubUser } = jwt.decode(token);
+  const apitoken = process.env.DATOCMS_READ_API_TOKEN;
+
+  return {
+    props: {
+      apitoken,
+      githubUser,
+    },
+  };
 }

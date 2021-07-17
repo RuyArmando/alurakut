@@ -6,7 +6,7 @@ export const CardBox = styled(Box)`
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   padding: 10px;
-
+  max-width: 100%;
   p {
     color: #29292e;
     font-size: 12px;
