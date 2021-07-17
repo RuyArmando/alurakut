@@ -33,6 +33,21 @@
 
 Nesta terceira edição do Imersão React, vamos reviver a web do passado criando nossa rede social baseada no famoso Orkut, que fez um tremendo sucesso, mas mas não vingou.
 
+🌟 Recursos Adicionais:
+- Visualizar todas as comunidades (página com a listagem)
+- Visualizar todos os amigos (página com a listagem)
+- Visualizar todos os seguidores (página com a listagem)
+- Escrever recado (integrado com o Dato CMS)
+- Escrever depoimento (integrado com o Dato CMS)
+- Revisado a lib AlurakutCommons quanto as rotas e algumas melhorias no menu.
+
+✨ Implementações Futuras:
+- Página com perfil dos amigos/seguidores.
+- Deixas recados e depoimentos para amigos/seguidores.
+- Listagem de todas as comunidades criadas.
+- Inscrição com membro da comunidade.
+- Paginação dos dados da comunidades, amigos e seguidores.
+
 ## 🧪 Tecnologias
 
 Este projeto foi desenvolvido utilizando:
