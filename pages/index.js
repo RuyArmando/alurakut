@@ -144,11 +144,12 @@ export default function Home({ apitoken, githubUser }) {
       });
   }, []);
 
-  function handleSendCommunity({ comunidadeTitle, comunidadeImage }) {
+  function handleSendCommunity({ comunidadeTitle, comunidadeImage, comunidadeLink }) {
     if (comunidadeTitle.trim() !== "" && comunidadeImage.trim() !== "") {
       const createCommunity = {
         title: comunidadeTitle,
         imageUrl: comunidadeImage,
+        link: comunidadeLink,
         creatorSlug: githubUser.toLowerCase(),
       };
 

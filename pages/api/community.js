@@ -10,6 +10,7 @@ export default async function handler(req, res) {
       itemType: "968035", // model ID
       title: req.body.title,
       imageUrl: req.body.imageUrl,
+      link: req.body.link,
       creatorSlug: req.body.creatorSlug,
     });
 

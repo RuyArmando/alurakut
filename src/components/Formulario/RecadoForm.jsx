@@ -21,7 +21,7 @@ function RecadoForm({ tilte, handleSend }) {
         />
       </div>
 
-      <button type="submit">Enviar Recado</button>
+      <button type="submit">Enviar</button>
     </form>
   );
 }
