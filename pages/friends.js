@@ -108,7 +108,7 @@ export default function FriendPage({ githubUser, friendData }) {
           </div>
           <div className="welcomeArea" style={{ gridArea: "welcomeArea" }}>
             <Box>
-              <h2 className="smallTitle">Minhas comunidades</h2>
+              <h2 className="smallTitle">Meus amigos</h2>
               <DetailLink>
                 Início &gt; <strong>Meus amigos</strong>
               </DetailLink>

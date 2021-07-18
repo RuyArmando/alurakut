@@ -53,7 +53,7 @@ export default function Home({ apitoken, githubUser }) {
             id: data.login,
             title: data.login,
             imageUrl: data.avatar_url,
-            link: `/users/${data.login}`,
+            link: `/user/${data.login}`,
             creatorSlug: githubUser,
           };
         });
@@ -76,7 +76,7 @@ export default function Home({ apitoken, githubUser }) {
             id: data.login,
             title: data.login,
             imageUrl: data.avatar_url,
-            link: `/users/${data.login}`,
+            link: `/user/${data.login}`,
             creatorSlug: githubUser,
           };
         });
@@ -149,7 +149,7 @@ export default function Home({ apitoken, githubUser }) {
       const createCommunity = {
         title: comunidadeTitle,
         imageUrl: comunidadeImage,
-        creatorSlug: githubUser,
+        creatorSlug: githubUser.toLowerCase(),
       };
 
       // Comunidades
@@ -185,9 +185,9 @@ export default function Home({ apitoken, githubUser }) {
   function handleSendScrap({ recado }) {
     if (recado.trim() !== "") {
       const createScrap = {
-        ownerSlug: githubUser,
+        ownerSlug: githubUser.toLowerCase(),
         content: recado,
-        creatorSlug: githubUser,
+        creatorSlug: githubUser.toLowerCase(),
         imageUrl: `https://github.com/${githubUser}.png`,
       };
 
@@ -215,9 +215,9 @@ export default function Home({ apitoken, githubUser }) {
   function handleSendTestimonial({ recado }) {
     if (recado.trim() !== "") {
       const createTestimonial = {
-        ownerSlug: githubUser,
+        ownerSlug: githubUser.toLowerCase(),
         content: recado,
-        creatorSlug: githubUser,
+        creatorSlug: githubUser.toLowerCase(),
         imageUrl: `https://github.com/${githubUser}.png`,
       };
 

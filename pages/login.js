@@ -12,7 +12,7 @@ export default function LoginPage() {
     const { token } = await fetch("https://alurakut.vercel.app/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ githubUser: githubUser }),
+      body: JSON.stringify({ githubUser: githubUser.toLowerCase() }),
     }).then((res) => res.json());
 
     setCookie(null, 'USER_TOKEN', token, {

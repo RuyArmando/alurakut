@@ -243,6 +243,40 @@ export function AlurakutProfileSidebarMenuDefault() {
     </AlurakutProfileSidebarMenuDefault.Wrapper>
   );
 }
+
+export function AlurakutProfileSidebarMenuFriend({ githubUser }) {
+  return (
+    <AlurakutProfileSidebarMenuDefault.Wrapper>
+      <nav>
+        <NextLink href={`/user/${githubUser}`}>
+          <a>
+            <img src={`${BASE_URL}/icons/user.svg`} />
+            Perfil
+          </a>
+        </NextLink>
+        <NextLink href={`/user/${githubUser}`}>
+          <a>
+            <img src={`${BASE_URL}/icons/book.svg`} />
+            Recados
+          </a>
+        </NextLink>
+        <NextLink href={`/user/${githubUser}`}>
+          <a>
+            <img src={`${BASE_URL}/icons/camera.svg`} />
+            Fotos
+          </a>
+        </NextLink>
+        <NextLink href={`/user/${githubUser}`}>
+          <a>
+            <img src={`${BASE_URL}/icons/sun.svg`} />
+            Depoimentos
+          </a>
+        </NextLink>
+      </nav>
+    </AlurakutProfileSidebarMenuDefault.Wrapper>
+  );
+}
+
 AlurakutProfileSidebarMenuDefault.Wrapper = styled.div`
   a {
     font-size: 12px;

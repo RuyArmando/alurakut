@@ -159,7 +159,7 @@ export async function getServerSideProps(context) {
   const data = await fetch(
     `https://api.github.com/users/${githubUser}/followers`
   ).then((res) => res.json());
-
+  
   return {
     props: {
       followerData: data,
